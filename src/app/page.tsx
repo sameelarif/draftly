@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/utils/cn";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -48,7 +48,6 @@ export default function Home() {
         <button className="px-4 py-2 bg-blue-500 rounded-lg">Login</button>
       </header>
       <div className="relative col-span-4">
-        {/* Background textarea showing the suggestion */}
         <div className="absolute inset-0 pointer-events-none">
           <textarea
             className={cn(
@@ -59,7 +58,6 @@ export default function Home() {
             readOnly
           />
         </div>
-        {/* Actual textarea field */}
         <textarea
           className={cn(
             "w-full h-full px-4 py-2 text-lg rounded-lg border border-gray-200",
@@ -77,7 +75,9 @@ export default function Home() {
           placeholder="Start typing..."
         />
       </div>
-      <div className="border border-gray-200 rounded-lg col-span-2"></div>
+      <div className="border border-gray-200 rounded-lg col-span-2 p-4">
+        <h2 className="text-lg font-semibold">Sources</h2>
+      </div>
     </div>
   );
 }
