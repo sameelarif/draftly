@@ -141,16 +141,21 @@ export default function Home() {
                         or drag and drop
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        PDF, DOCX, or TXT (MAX. 10MB)
+                        PDF, DOCX, TXT, or Image (MAX. 10MB)
                       </p>
                     </div>
-                    <input id="dropzone-file" type="file" className="hidden" />
+                    <input
+                      id="dropzone-file"
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp"
+                    />
                   </label>
                 </div>
               </TabsContent>
               <TabsContent value="text" className="mt-4">
                 <Textarea
-                  placeholder="Type or paste your text here..."
+                  placeholder="Write in the tone of Commander Levi..."
                   className="min-h-[100px]"
                 />
                 <Button className="mt-2 w-full">
