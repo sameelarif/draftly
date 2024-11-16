@@ -3,7 +3,7 @@ import { AutoCompleteSchema } from "@/types/prompt";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 export async function POST(req: Request) {
-  const { text } = await req.json();
+  const { text, userId } = await req.json();
 
   const completion = await openai.beta.chat.completions.parse({
     model: "gpt-4o-mini",
