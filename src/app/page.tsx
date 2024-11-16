@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { FilePlus, Link, Sparkles, Type, Upload } from "lucide-react";
+import { FilePlus, FileText, Link, Sparkles, Type, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -110,8 +110,8 @@ export default function Home() {
         <div className="flex flex-col items-start gap-4">
           {uploads.map((upload) => (
             <div key={upload} className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              <span>{upload}</span>
+              <FileText />
+              <span>{upload.split("___")[2]}</span>
               <Button size="sm" className="ml-auto">
                 Remove
               </Button>

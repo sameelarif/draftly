@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
   const files = await fs.readdir(tempDir);
 
   const userFiles = files.filter((file) => file.split("___")[1] === userId);
-  console.log(userFiles);
+
   return new Response(JSON.stringify(userFiles), {
     status: 200,
     headers: {
