@@ -2,47 +2,42 @@ import openai from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Assistant } from "openai/resources/beta/assistants.mjs";
-import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
+import { TextDeltaBlock } from "openai/resources/beta/threads/messages.mjs";
 
 const userAssistants = new Map<string, Assistant>();
 
 export async function POST(req: NextRequest) {
-  const startTime = Date.now();
   const { userId } = getAuth(req);
-  console.log(`getAuth: ${Date.now() - startTime}ms`);
 
   if (!userId) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const { text } = await req.json();
-  console.log(`req.json: ${Date.now() - startTime}ms`);
 
   const supabase = createClient(cookies());
-  console.log(`createClient: ${Date.now() - startTime}ms`);
-
   const savedVectorStore = await supabase
     .from("vectors")
     .select("*")
     .eq("user_id", userId)
     .single();
-  console.log(`supabase.from.select: ${Date.now() - startTime}ms`);
 
   if (savedVectorStore.status !== 200) {
-    return NextResponse.json(
-      { error: "No vector store found for user" },
-      { status: 400 }
+    return new Response(
+      JSON.stringify({ error: "No vector store found for user" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  if (userAssistants.get(userId) === undefined) {
+  if (!userAssistants.has(userId)) {
     const assistant = await openai.beta.assistants.retrieve(
       savedVectorStore.data.assistant_id
     );
-
-    console.log(`openai.beta.assistants.retrieve: ${Date.now() - startTime}ms`);
 
     await openai.beta.assistants.update(assistant.id, {
       tool_resources: {
@@ -51,7 +46,6 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-    console.log(`openai.beta.assistants.update: ${Date.now() - startTime}ms`);
 
     userAssistants.set(userId, assistant);
   }
@@ -59,9 +53,9 @@ export async function POST(req: NextRequest) {
   const assistant = userAssistants.get(userId);
 
   if (!assistant) {
-    return NextResponse.json(
-      { error: "No assistant found for user" },
-      { status: 400 }
+    return new Response(
+      JSON.stringify({ error: "No assistant found for user" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -75,27 +69,47 @@ export async function POST(req: NextRequest) {
       },
     ],
   });
-  console.log(`openai.beta.threads.create: ${Date.now() - startTime}ms`);
 
-  const run = await openai.beta.threads.runs.createAndPoll(
-    thread.id,
-    {
-      assistant_id: assistant.id,
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const streamResponse = await openai.beta.threads.runs.stream(
+          thread.id,
+          {
+            assistant_id: assistant.id,
+          }
+        );
+
+        for await (const chunk of streamResponse) {
+          if (chunk.event === "thread.message.delta") {
+            const message = chunk.data.delta.content;
+
+            if (!message) {
+              continue;
+            }
+
+            for (const content of message) {
+              controller.enqueue(
+                encoder.encode((content as TextDeltaBlock).text?.value)
+              );
+            }
+          }
+        }
+      } catch (error) {
+        controller.error(error);
+      } finally {
+        controller.close();
+      }
     },
-    {
-      pollIntervalMs: 400,
-    }
-  );
-  console.log(
-    `openai.beta.threads.runs.createAndPoll: ${Date.now() - startTime}ms`
-  );
-
-  const messages = await openai.beta.threads.messages.list(thread.id, {
-    run_id: run.id,
   });
-  console.log(`openai.beta.threads.messages.list: ${Date.now() - startTime}ms`);
 
-  return NextResponse.json({
-    suggestion: (messages.data[0].content[0] as TextContentBlock).text.value,
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
   });
 }

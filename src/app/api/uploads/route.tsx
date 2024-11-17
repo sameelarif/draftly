@@ -51,7 +51,7 @@ export async function PUT(req: NextRequest) {
   } else {
     const assistant = await openai.beta.assistants.create({
       name: "Writing Completion Assistant",
-      model: "gpt-4o-mini",
+      model: "gpt-4-turbo",
       tools: [
         {
           type: "file_search",

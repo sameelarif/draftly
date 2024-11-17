@@ -39,17 +39,42 @@ export default function Home() {
     }
 
     const timeout = setTimeout(async () => {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
-      });
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        });
 
-      if (response.ok) {
-        const { suggestion } = await response.json();
-        setSuggestion(suggestion);
+        if (response.ok) {
+          const reader = response.body?.getReader();
+          if (!reader) {
+            console.error("Failed to get response reader");
+            return;
+          }
+
+          const decoder = new TextDecoder();
+          let done = false;
+          let streamSuggestion = "";
+
+          while (!done) {
+            const { value, done: isDone } = await reader.read();
+            done = isDone;
+            if (value) {
+              const chunk = decoder.decode(value, { stream: true });
+              streamSuggestion += chunk;
+              setSuggestion((prev) => prev + chunk);
+
+              await setTimeout(() => {}, 200);
+            }
+          }
+        } else {
+          console.error("Failed to fetch suggestion:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error streaming suggestion:", error);
       }
     }, 1000);
 
