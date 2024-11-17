@@ -2,6 +2,7 @@ import { ClerkProvider, SignInButton, SignedOut } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,7 +29,11 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={cn(
+            "antialiased flex items-center w-full justify-center",
+            geistSans.variable,
+            geistMono.variable
+          )}
         >
           <SignedOut>
             <SignInButton />
