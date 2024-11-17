@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import { FileUpload } from "@/components/ui/file-upload";
+import { FlipWords } from "@/components/ui/flip-words";
 
 export default function Home() {
   const [uploads, setUploads] = useState<string[]>([]);
@@ -72,7 +73,23 @@ export default function Home() {
   return (
     <div className="grid grid-cols-6 gap-4 grid-flow-row p-12">
       <header className="flex col-span-6 rounded-lg justify-between items-center p-4 bg-gray-800 text-white">
-        <div className="text-2xl font-bold">Draftly</div>
+        <div className="text-2xl font-bold">
+          Draftly&nbsp;
+          <span className="text-gray-200 text-sm font-normal">
+            for
+            <FlipWords
+              className="text-gray-200 font-normal"
+              duration={2000}
+              words={[
+                "students",
+                "researchers",
+                "content creators",
+                "marketers",
+                "copywriters",
+              ]}
+            />
+          </span>
+        </div>
         <SignedIn>
           <UserButton />
         </SignedIn>
