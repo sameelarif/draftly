@@ -109,7 +109,7 @@ export default function Home() {
   }, [setUploads]);
 
   return (
-    <div className="grid grid-cols-6 gap-4 grid-flow-row p-12">
+    <div className="grid grid-cols-6 gap-4 grid-flow-row p-12 w-full">
       <Header />
       <div className="relative col-span-4">
         <div className="absolute inset-0 pointer-events-none">
