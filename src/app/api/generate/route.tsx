@@ -3,15 +3,20 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { Assistant } from "openai/resources/beta/assistants.mjs";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
 import { join } from "path";
 
-const tempDir = join(process.cwd(), "tmp");
+const userAssistants = new Map<string, Assistant>();
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const { userId } = getAuth(req);
   console.log(`getAuth: ${Date.now() - startTime}ms`);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
 
   const { text } = await req.json();
   console.log(`req.json: ${Date.now() - startTime}ms`);
@@ -35,9 +40,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const assistant = await openai.beta.assistants.retrieve(
-    savedVectorStore.data.assistant_id
-  );
+  if (userAssistants.get(userId) === undefined) {
+    const assistant = await openai.beta.assistants.retrieve(
+      savedVectorStore.data.assistant_id
+    );
+
+    userAssistants.set(userId, assistant);
+  }
+
+  const assistant = userAssistants.get(userId);
+
+  if (!assistant) {
+    return NextResponse.json(
+      { error: "No assistant found for user" },
+      { status: 400 }
+    );
+  }
+
   console.log(`openai.beta.assistants.retrieve: ${Date.now() - startTime}ms`);
 
   await openai.beta.assistants.update(assistant.id, {
