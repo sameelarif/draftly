@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { Assistant } from "openai/resources/beta/assistants.mjs";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
-import { join } from "path";
 
 const userAssistants = new Map<string, Assistant>();
 
@@ -31,8 +30,6 @@ export async function POST(req: NextRequest) {
     .single();
   console.log(`supabase.from.select: ${Date.now() - startTime}ms`);
 
-  console.log(savedVectorStore);
-
   if (savedVectorStore.status !== 200) {
     return NextResponse.json(
       { error: "No vector store found for user" },
@@ -44,6 +41,17 @@ export async function POST(req: NextRequest) {
     const assistant = await openai.beta.assistants.retrieve(
       savedVectorStore.data.assistant_id
     );
+
+    console.log(`openai.beta.assistants.retrieve: ${Date.now() - startTime}ms`);
+
+    await openai.beta.assistants.update(assistant.id, {
+      tool_resources: {
+        file_search: {
+          vector_store_ids: [savedVectorStore.data.id],
+        },
+      },
+    });
+    console.log(`openai.beta.assistants.update: ${Date.now() - startTime}ms`);
 
     userAssistants.set(userId, assistant);
   }
@@ -57,17 +65,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log(`openai.beta.assistants.retrieve: ${Date.now() - startTime}ms`);
-
-  await openai.beta.assistants.update(assistant.id, {
-    tool_resources: {
-      file_search: {
-        vector_store_ids: [savedVectorStore.data.id],
-      },
-    },
-  });
-  console.log(`openai.beta.assistants.update: ${Date.now() - startTime}ms`);
-
   const thread = await openai.beta.threads.create({
     messages: [
       {
@@ -80,9 +77,15 @@ export async function POST(req: NextRequest) {
   });
   console.log(`openai.beta.threads.create: ${Date.now() - startTime}ms`);
 
-  const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
-    assistant_id: assistant.id,
-  });
+  const run = await openai.beta.threads.runs.createAndPoll(
+    thread.id,
+    {
+      assistant_id: assistant.id,
+    },
+    {
+      pollIntervalMs: 400,
+    }
+  );
   console.log(
     `openai.beta.threads.runs.createAndPoll: ${Date.now() - startTime}ms`
   );
