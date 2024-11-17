@@ -24,11 +24,10 @@ export default function Home() {
   const { uploads, setUploads, removeUpload } = useUploadsStore();
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
   const [isTyping, setIsTyping] = useState(false);
   const [hasCompletedSuggestions, setHasCompletedSuggestions] = useState(false);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   useEffect(() => {
     setSuggestion("");
@@ -37,9 +36,13 @@ export default function Home() {
       return;
     }
 
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
+    if (abortController) {
+      // Abort previous fetch request if user starts typing
+      abortController.abort();
     }
+
+    const controller = new AbortController();
+    setAbortController(controller);
 
     const timeout = setTimeout(async () => {
       try {
@@ -49,6 +52,7 @@ export default function Home() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ text }),
+          signal: controller.signal,
         });
 
         if (response.ok) {
@@ -86,12 +90,14 @@ export default function Home() {
         } else {
           console.error("Failed to fetch suggestion:", response.statusText);
         }
-      } catch (error) {
-        console.error("Error streaming suggestion:", error);
+      } catch (error: unknown) {
+        if ((error as Error).name === "AbortError") {
+          console.log("Fetch aborted due to new input.");
+        } else {
+          console.error("Error streaming suggestion:", error);
+        }
       }
     }, 1000);
-
-    setTypingTimeout(timeout);
 
     return () => clearTimeout(timeout);
   }, [text, isTyping]);
@@ -109,40 +115,42 @@ export default function Home() {
   }, [setUploads]);
 
   return (
-    <div className="grid grid-cols-6 gap-4 grid-flow-row p-12 w-full">
+    <div className="grid grid-cols-6 gap-4 grid-flow-row p-12 max-w-screen-2xl w-full">
       <Header />
       <div className="relative col-span-4">
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="relative w-full h-full">
+          <div
+            className={cn(
+              "absolute inset-0 px-4 text-white py-2 text-lg rounded-lg border border-gray-200",
+              "bg-transparent font-medium pointer-events-none whitespace-pre-wrap"
+            )}
+            aria-hidden="true"
+          >
+            {text}
+            <span className="text-black opacity-40">{suggestion}</span>
+          </div>
           <textarea
             className={cn(
-              "w-full h-full px-4 py-2 text-lg opacity-40 rounded-lg border border-gray-200",
-              "bg-transparent text-muted-foreground font-medium"
+              "w-full h-full px-4 py-2 text-lg rounded-lg border border-gray-200",
+              "bg-transparent font-medium relative"
             )}
-            value={text + suggestion}
-            readOnly
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setIsTyping(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Tab") {
+                setHasCompletedSuggestions(true);
+                e.preventDefault();
+                setText(text + suggestion);
+                setSuggestion("");
+                setIsTyping(false);
+              }
+            }}
+            placeholder="Start typing..."
           />
         </div>
-        <textarea
-          className={cn(
-            "w-full h-full px-4 py-2 text-lg rounded-lg border border-gray-200",
-            "bg-transparent font-medium relative"
-          )}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setIsTyping(true);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Tab") {
-              setHasCompletedSuggestions(true);
-              e.preventDefault();
-              setText(text + suggestion);
-              setSuggestion("");
-              setIsTyping(false);
-            }
-          }}
-          placeholder="Start typing..."
-        />
         <AnimatePresence>
           {suggestion && !hasCompletedSuggestions && (
             <motion.div
