@@ -185,7 +185,23 @@ export default function Home() {
         <h2 className="text-lg font-semibold">Sources</h2>
         <div className="flex flex-col items-start gap-4">
           {uploads.map((upload, idx) => (
-            <div key={idx} className="flex items-center gap-2">
+            <motion.div
+              initial={{
+                x: 10,
+                opacity: 0,
+              }}
+              animate={{
+                x: 0,
+                opacity: 1,
+              }}
+              transition={{
+                delay: 0.1 * idx,
+                duration: 0.4,
+                ease: "easeInOut",
+              }}
+              key={idx}
+              className="flex items-center gap-2"
+            >
               <FileText />
               <span>{upload.name}</span>
               <Button
@@ -207,7 +223,7 @@ export default function Home() {
               >
                 Remove
               </Button>
-            </div>
+            </motion.div>
           ))}
         </div>
         <Dialog>
