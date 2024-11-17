@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,13 +11,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FileUpload } from "@/components/ui/file-upload";
-import { FlipWords } from "@/components/ui/flip-words";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { Upload } from "@/types/upload";
-import { SignedIn, UserButton } from "@clerk/nextjs";
 import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -109,28 +108,7 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-6 gap-4 grid-flow-row p-12">
-      <header className="flex col-span-6 rounded-lg justify-between items-center p-4 bg-gray-800 text-white">
-        <div className="text-2xl font-bold">
-          Draftly&nbsp;
-          <span className="text-gray-200 text-sm font-normal">
-            for
-            <FlipWords
-              className="text-gray-200 font-normal"
-              duration={2000}
-              words={[
-                "students",
-                "researchers",
-                "content creators",
-                "marketers",
-                "copywriters",
-              ]}
-            />
-          </span>
-        </div>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </header>
+      <Header />
       <div className="relative col-span-4">
         <div className="absolute inset-0 pointer-events-none">
           <textarea
@@ -170,7 +148,23 @@ export default function Home() {
             <div key={idx} className="flex items-center gap-2">
               <FileText />
               <span>{upload.name}</span>
-              <Button size="sm" className="ml-auto">
+              <Button
+                onClick={async () => {
+                  const res = await fetch(`/api/uploads`, {
+                    method: "DELETE",
+                    body: JSON.stringify({ id: upload.id }),
+                  });
+
+                  if (!res.ok) {
+                    console.error("Failed to delete upload:", res.statusText);
+                    return;
+                  }
+
+                  setUploads((prev) => prev.filter((u) => u.id !== upload.id));
+                }}
+                size="sm"
+                className="ml-auto"
+              >
                 Remove
               </Button>
             </div>

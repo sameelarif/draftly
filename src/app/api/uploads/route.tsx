@@ -27,7 +27,6 @@ export async function PUT(req: NextRequest) {
 
   const id = crypto.randomUUID();
 
-  // Convert file to buffer
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const filePath = join(tempDir, `${id}___${userId}___${file.name}`);
@@ -35,10 +34,8 @@ export async function PUT(req: NextRequest) {
   await fs.mkdir(tempDir, { recursive: true });
   await fs.writeFile(filePath, buffer);
 
-  // Create file stream for OpenAI upload
   const fileStream = fsSync.createReadStream(filePath);
 
-  // Check for existing vector store
   const savedVectorStore = await supabase
     .from("vectors")
     .select("id")
@@ -73,7 +70,6 @@ export async function PUT(req: NextRequest) {
     vectorStoreId = vectorStore.id;
   }
 
-  // Upload file to OpenAI and delete temporary file
   const uploadedFiles = await openai.beta.vectorStores.files.uploadAndPoll(
     vectorStoreId,
     fileStream
@@ -89,7 +85,7 @@ export async function PUT(req: NextRequest) {
 
   console.log(res);
 
-  await fs.unlink(filePath); // Delete the temporary file after processing
+  await fs.unlink(filePath);
 
   return new Response("File uploaded successfully", { status: 200 });
 }
@@ -112,9 +108,15 @@ export async function DELETE(req: NextRequest) {
     .eq("user_id", userId)
     .single();
 
+  if (!file.data) {
+    return new Response("File not found", { status: 404 });
+  }
+
+  await supabase.from("files").delete().eq("id", id);
+
   await openai.beta.vectorStores.files.del(file.data.vector_id, file.data.id);
 
-  return new Response("File not found", { status: 404 });
+  return new Response("File deleted successfully", { status: 200 });
 }
 
 export async function GET(req: NextRequest) {
