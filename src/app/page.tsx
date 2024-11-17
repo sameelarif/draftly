@@ -93,7 +93,7 @@ export default function Home() {
     setTypingTimeout(timeout);
 
     return () => clearTimeout(timeout);
-  }, [text, isTyping]);
+  }, [text, isTyping, typingTimeout]);
 
   useEffect(() => {
     const fetchUploads = async () => {
