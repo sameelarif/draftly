@@ -15,12 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { Upload } from "@/types/upload";
+import { useUploadsStore } from "@/store/uploads";
 import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [uploads, setUploads] = useState<Upload[]>([]);
+  const { uploads, setUploads, removeUpload } = useUploadsStore();
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
@@ -160,7 +160,7 @@ export default function Home() {
                     return;
                   }
 
-                  setUploads((prev) => prev.filter((u) => u.id !== upload.id));
+                  removeUpload(upload.id);
                 }}
                 size="sm"
                 className="ml-auto"

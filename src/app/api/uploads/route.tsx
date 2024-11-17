@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import openai from "@/lib/openai";
 import fsSync from "fs";
 import { UploadDeleteRequest } from "@/types/upload";
+import type { File as FileData } from "@/types/file";
 
 const tempDir = join(process.cwd(), "tmp");
 
@@ -75,19 +76,23 @@ export async function PUT(req: NextRequest) {
     fileStream
   );
 
-  const res = await supabase.from("files").insert({
+  const fileData = {
     id: uploadedFiles.id,
     vector_id: vectorStoreId,
     user_id: userId,
     name: file.name.split(".")[0],
     type: file.type,
-  });
+  } as FileData;
 
-  console.log(res);
+  const res = await supabase.from("files").insert(fileData);
 
   await fs.unlink(filePath);
 
-  return new Response("File uploaded successfully", { status: 200 });
+  if (res.error) {
+    return new Response(res.error.message, { status: 500 });
+  }
+
+  return new Response(JSON.stringify(fileData), { status: 200 });
 }
 
 export async function DELETE(req: NextRequest) {

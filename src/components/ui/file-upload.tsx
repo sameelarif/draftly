@@ -1,10 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useUploadsStore } from "@/store/uploads";
 import { Upload } from "lucide-react";
 import { useState } from "react";
 
 export function FileUpload() {
+  const { addUpload } = useUploadsStore();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "success" | "error"
@@ -28,6 +30,7 @@ export function FileUpload() {
 
       if (response.ok) {
         setUploadStatus("success");
+        addUpload(await response.json());
       } else {
         setUploadStatus("error");
       }
