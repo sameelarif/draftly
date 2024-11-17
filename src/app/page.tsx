@@ -92,7 +92,7 @@ export default function Home() {
     setTypingTimeout(timeout);
 
     return () => clearTimeout(timeout);
-  }, [text, isTyping, typingTimeout]);
+  }, [text, isTyping]);
 
   useEffect(() => {
     const fetchUploads = async () => {
@@ -104,7 +104,7 @@ export default function Home() {
     };
 
     fetchUploads();
-  }, []);
+  }, [setUploads]);
 
   return (
     <div className="grid grid-cols-6 gap-4 grid-flow-row p-12">
