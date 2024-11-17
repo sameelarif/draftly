@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import openai from "@/lib/openai";
 import fsSync from "fs";
+import { UploadDeleteRequest } from "@/types/upload";
 
 const tempDir = join(process.cwd(), "tmp");
 
@@ -95,7 +96,7 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { userId } = getAuth(req);
-  const { id } = req.json() as any;
+  const { id } = (await req.json()) as UploadDeleteRequest;
   const supabase = createClient(cookies());
 
   if (!userId) {

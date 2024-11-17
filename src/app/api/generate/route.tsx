@@ -1,5 +1,6 @@
 import openai from "@/lib/openai";
 import { createClient } from "@/lib/supabase/server";
+import { GenerationRequest } from "@/types/prompt";
 import { getAuth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { text } = await req.json();
+  const { text } = (await req.json()) as GenerationRequest;
 
   const supabase = createClient(cookies());
   const savedVectorStore = await supabase

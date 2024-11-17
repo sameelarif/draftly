@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,18 +9,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { FilePlus, FileText, Link, Sparkles, Type, Upload } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { SignedIn, UserButton } from "@clerk/nextjs";
 import { FileUpload } from "@/components/ui/file-upload";
 import { FlipWords } from "@/components/ui/flip-words";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import type { Upload } from "@/types/upload";
+import { SignedIn, UserButton } from "@clerk/nextjs";
+import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [uploads, setUploads] = useState<any[]>([]);
+  const [uploads, setUploads] = useState<Upload[]>([]);
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
@@ -62,18 +63,16 @@ export default function Home() {
 
           const decoder = new TextDecoder();
           let done = false;
-          let streamSuggestion = "";
           let i = 0;
 
           while (!done) {
             const { value, done: isDone } = await reader.read();
             done = isDone;
             if (value) {
-              const chunk = decoder.decode(value, { stream: true });
-              streamSuggestion += chunk;
+              let chunk = decoder.decode(value, { stream: true });
 
               if (i === 0 && chunk[0] === " ") {
-                streamSuggestion = streamSuggestion.slice(1);
+                chunk = chunk.substring(1);
               }
 
               setSuggestion((prev) => prev + chunk);
@@ -167,8 +166,8 @@ export default function Home() {
       <div className="border border-gray-200 rounded-lg col-span-2 p-4">
         <h2 className="text-lg font-semibold">Sources</h2>
         <div className="flex flex-col items-start gap-4">
-          {uploads.map((upload) => (
-            <div key={upload} className="flex items-center gap-2">
+          {uploads.map((upload, idx) => (
+            <div key={idx} className="flex items-center gap-2">
               <FileText />
               <span>{upload.name}</span>
               <Button size="sm" className="ml-auto">
