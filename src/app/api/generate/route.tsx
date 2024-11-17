@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       {
         role: "user",
         content:
-          "Given the following text, generate a completion of the thought or sentence. Do not include the original text in the response. For example, if the text is 'The sky', you could respond with ' is blue' (note the added space was needed). Here is the text:\n\n" +
+          "Given the following text, generate a completion of the thought or sentence. Do not include the original text in the response. For example, if the text is 'The sky', you could respond with 'is blue'. Here is the text:\n\n" +
           text,
       },
     ],

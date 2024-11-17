@@ -26,11 +26,12 @@ export default function Home() {
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [isTyping, setIsTyping] = useState(false); // New state to track typing
 
   useEffect(() => {
     setSuggestion("");
 
-    if (!text) {
+    if (!text || text.trim().length === 0 || !isTyping) {
       return;
     }
 
@@ -49,6 +50,10 @@ export default function Home() {
         });
 
         if (response.ok) {
+          if (text[text.length - 1] !== " ") {
+            setSuggestion(" ");
+          }
+
           const reader = response.body?.getReader();
           if (!reader) {
             console.error("Failed to get response reader");
@@ -58,6 +63,7 @@ export default function Home() {
           const decoder = new TextDecoder();
           let done = false;
           let streamSuggestion = "";
+          let i = 0;
 
           while (!done) {
             const { value, done: isDone } = await reader.read();
@@ -65,9 +71,16 @@ export default function Home() {
             if (value) {
               const chunk = decoder.decode(value, { stream: true });
               streamSuggestion += chunk;
+
+              if (i === 0 && chunk[0] === " ") {
+                streamSuggestion = streamSuggestion.slice(1);
+              }
+
               setSuggestion((prev) => prev + chunk);
 
-              await setTimeout(() => {}, 200);
+              await new Promise((resolve) => setTimeout(resolve, 200));
+
+              i++;
             }
           }
         } else {
@@ -81,7 +94,7 @@ export default function Home() {
     setTypingTimeout(timeout);
 
     return () => clearTimeout(timeout);
-  }, [text]);
+  }, [text, isTyping]);
 
   useEffect(() => {
     const fetchUploads = async () => {
@@ -136,12 +149,16 @@ export default function Home() {
             "bg-transparent font-medium relative"
           )}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            setIsTyping(true);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Tab") {
               e.preventDefault();
               setText(text + suggestion);
               setSuggestion("");
+              setIsTyping(false);
             }
           }}
           placeholder="Start typing..."
