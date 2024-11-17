@@ -20,7 +20,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { FlipWords } from "@/components/ui/flip-words";
 
 export default function Home() {
-  const [uploads, setUploads] = useState<string[]>([]);
+  const [uploads, setUploads] = useState<any[]>([]);
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
@@ -128,7 +128,7 @@ export default function Home() {
           {uploads.map((upload) => (
             <div key={upload} className="flex items-center gap-2">
               <FileText />
-              <span>{upload.split("___")[2]}</span>
+              <span>{upload.name}</span>
               <Button size="sm" className="ml-auto">
                 Remove
               </Button>

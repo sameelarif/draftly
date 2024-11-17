@@ -1,14 +1,10 @@
 import openai from "@/lib/openai";
-import { AutoCompleteSchema } from "@/types/prompt";
-import { auth, getAuth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
-import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import { join } from "path";
-import fs from "fs/promises";
-import fsSync from "fs";
 import { createClient } from "@/lib/supabase/server";
+import { getAuth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
+import { join } from "path";
 
 const tempDir = join(process.cwd(), "tmp");
 

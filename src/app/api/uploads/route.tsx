@@ -73,19 +73,20 @@ export async function PUT(req: NextRequest) {
   }
 
   // Upload file to OpenAI and delete temporary file
-  const batch = await openai.beta.vectorStores.fileBatches.uploadAndPoll(
+  const uploadedFiles = await openai.beta.vectorStores.files.uploadAndPoll(
     vectorStoreId,
-    {
-      files: [fileStream], // Uploading the current file only
-    }
+    fileStream
   );
 
-  console.log(
-    await openai.beta.vectorStores.fileBatches.listFiles(
-      vectorStoreId,
-      batch.id
-    )
-  );
+  const res = await supabase.from("files").insert({
+    id: uploadedFiles.id,
+    vector_id: vectorStoreId,
+    user_id: userId,
+    name: file.name.split(".")[0],
+    type: file.type,
+  });
+
+  console.log(res);
 
   await fs.unlink(filePath); // Delete the temporary file after processing
 
@@ -94,43 +95,38 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { userId } = getAuth(req);
+  const { id } = req.json() as any;
+  const supabase = createClient(cookies());
 
   if (!userId) {
     return new Response("Unauthorized", { status: 401 });
-  }
-
-  const { id } = await req.json();
-
-  if (typeof id !== "string") {
+  } else if (typeof id !== "string") {
     return new Response("Invalid id", { status: 400 });
   }
 
-  const files = await fs.readdir(tempDir);
+  const file = await supabase
+    .from("files")
+    .select()
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
 
-  for (const file of files) {
-    if (file.startsWith(id + "___")) {
-      await fs.unlink(join(tempDir, file));
-      return new Response("File deleted", { status: 200 });
-    }
-  }
+  await openai.beta.vectorStores.files.del(file.data.vector_id, file.data.id);
 
   return new Response("File not found", { status: 404 });
 }
 
 export async function GET(req: NextRequest) {
   const { userId } = getAuth(req);
+  const supabase = createClient(cookies());
 
   if (!userId) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const files = await fs.readdir(tempDir);
+  const files = await supabase.from("files").select().eq("user_id", userId);
 
-  const userFiles = files
-    .filter((file) => file.split("___")[1] === userId)
-    .map((file) => file.split("___").pop()); // Return file names only
-
-  return new Response(JSON.stringify(userFiles), {
+  return new Response(JSON.stringify(files.data), {
     status: 200,
     headers: {
       "Content-Type": "application/json",
