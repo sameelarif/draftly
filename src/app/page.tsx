@@ -15,14 +15,15 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useUploadsStore } from "@/store/uploads";
+import { useSourcesStore } from "@/store/sources";
+import { Source } from "@/types/source";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatCompletionChunk } from "groq-sdk/resources/chat/completions.mjs";
 import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const { uploads, setUploads, removeUpload } = useUploadsStore();
+  const { sources, setSources, removeSource } = useSourcesStore();
   const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -109,16 +110,16 @@ export default function Home() {
   }, [text, isTyping]);
 
   useEffect(() => {
-    const fetchUploads = async () => {
+    const fetchSources = async () => {
       const response = await fetch("/api/uploads");
       if (response.ok) {
-        const uploads = await response.json();
-        setUploads(uploads);
+        const sources = (await response.json()) as Source[];
+        setSources(sources);
       }
     };
 
-    fetchUploads();
-  }, [setUploads]);
+    fetchSources();
+  }, [setSources]);
 
   const renderTextWithSuggestion = () => {
     const textSpans = text
@@ -179,7 +180,7 @@ export default function Home() {
             onChange={(e) => {
               setText(e.target.value);
               setIsTyping(true);
-              setSuggestion(""); // Clear suggestion when typing
+              setSuggestion("");
             }}
             onKeyDown={(e) => {
               if (e.key === "Tab") {
@@ -226,7 +227,7 @@ export default function Home() {
       <div className="border border-gray-200 rounded-lg col-span-2 p-4">
         <h2 className="text-lg font-semibold">Sources</h2>
         <div className="flex flex-col items-start gap-4">
-          {uploads.map((upload, idx) => (
+          {sources.map((source, idx) => (
             <motion.div
               initial={{
                 x: 10,
@@ -245,12 +246,12 @@ export default function Home() {
               className="flex items-center gap-2"
             >
               <FileText />
-              <span>{upload.name}</span>
+              <span>{source.label}</span>
               <Button
                 onClick={async () => {
                   const res = await fetch(`/api/uploads`, {
                     method: "DELETE",
-                    body: JSON.stringify({ id: upload.id }),
+                    body: JSON.stringify({ id: source.id }),
                   });
 
                   if (!res.ok) {
@@ -258,7 +259,7 @@ export default function Home() {
                     return;
                   }
 
-                  removeUpload(upload.id);
+                  removeSource(source.id);
                 }}
                 size="sm"
                 className="ml-auto"

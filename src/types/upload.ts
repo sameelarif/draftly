@@ -1,5 +1,5 @@
 export interface UploadDeleteRequest {
-  id: string;
+  id: number;
 }
 
 export interface Upload {
