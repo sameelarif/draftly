@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
           ({
             role: "system",
             content: `Source ${i + 1}:
-        Name: ${source.label}
-        Content: \`\`\`${source.content}\`\`\``,
+        File Name: ${source.label}
+        File Content: \`\`\`${source.content}\`\`\``,
           } as ChatCompletionSystemMessageParam)
       ),
       { role: "user", content: text },

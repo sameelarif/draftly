@@ -25,7 +25,8 @@ export async function PUT(req: NextRequest) {
 
   const { error, data: source } = await supabase
     .from("source")
-    .insert([{ user_id: userId, label: file.name, content: sanitizedContent }]);
+    .insert([{ user_id: userId, label: file.name, content: sanitizedContent }])
+    .select();
 
   if (error) {
     console.log(error);
@@ -39,7 +40,7 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  return new Response(JSON.stringify(source), { status: 200 });
+  return new Response(JSON.stringify(source[0]), { status: 200 });
 }
 
 export async function GET(req: NextRequest) {
