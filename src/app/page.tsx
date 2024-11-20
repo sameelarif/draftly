@@ -123,6 +123,42 @@ export default function Home() {
     fetchUploads();
   }, [setUploads]);
 
+  const renderTextWithSuggestion = () => {
+    const textSpans = text
+      .split("")
+      .map((char, index) => <span key={`text-${index}`}>{char}</span>);
+
+    const suggestionSpans = suggestion.split("").map((char, index) => (
+      <motion.span
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.2,
+          ease: "easeInOut",
+        }}
+        key={`suggestion-${index}`}
+        style={{
+          color: "rgb(156 163 175)",
+        }}
+      >
+        {char}
+      </motion.span>
+    ));
+
+    return (
+      <>
+        {textSpans}
+        {suggestionSpans}
+      </>
+    );
+  };
+
   return (
     <div className="grid grid-cols-6 gap-4 grid-flow-row p-12 max-w-screen-2xl w-full">
       <Header />
@@ -135,8 +171,7 @@ export default function Home() {
             )}
             aria-hidden="true"
           >
-            {text}
-            <span className="text-black opacity-40">{suggestion}</span>
+            {renderTextWithSuggestion()}
           </div>
           <textarea
             className={cn(
@@ -147,6 +182,7 @@ export default function Home() {
             onChange={(e) => {
               setText(e.target.value);
               setIsTyping(true);
+              setSuggestion(""); // Clear suggestion when typing
             }}
             onKeyDown={(e) => {
               if (e.key === "Tab") {
@@ -160,35 +196,6 @@ export default function Home() {
             placeholder="Start typing..."
           />
         </div>
-        <AnimatePresence>
-          {suggestion && !hasCompletedSuggestions && (
-            <motion.div
-              initial={{
-                y: 20,
-                opacity: 0,
-              }}
-              animate={{
-                y: 0,
-                opacity: 1,
-              }}
-              transition={{
-                delay: 0.45,
-                duration: 0.4,
-                ease: "easeInOut",
-              }}
-              exit={{
-                y: 20,
-                opacity: 0,
-              }}
-            >
-              <div className="absolute bottom-3 left-3 p-4 bg-white rounded-lg shadow-md">
-                <span className="text-sm text-gray-500">
-                  Press <kbd>Tab</kbd> to accept suggestion
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
       <div className="border border-gray-200 rounded-lg col-span-2 p-4">
         <h2 className="text-lg font-semibold">Sources</h2>
