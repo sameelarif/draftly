@@ -16,10 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useUploadsStore } from "@/store/uploads";
-import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
-import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatCompletionChunk } from "groq-sdk/resources/chat/completions.mjs";
+import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const { uploads, setUploads, removeUpload } = useUploadsStore();
@@ -69,14 +69,13 @@ export default function Home() {
 
           const decoder = new TextDecoder();
           let done = false;
-          let i = 0;
 
           while (!done) {
             const { done: isDone, value } = await reader.read();
 
             done = isDone;
             if (value) {
-              let chunk = decoder.decode(value, { stream: true });
+              const chunk = decoder.decode(value, { stream: true });
 
               for (const line of chunk.split("\n")) {
                 if (line.trim() === "") {
@@ -92,8 +91,6 @@ export default function Home() {
               }
 
               await new Promise((resolve) => setTimeout(resolve, 200));
-
-              i++;
             }
           }
         } else {
@@ -195,6 +192,35 @@ export default function Home() {
             }}
             placeholder="Start typing..."
           />
+          <AnimatePresence>
+            {suggestion && !hasCompletedSuggestions && (
+              <motion.div
+                initial={{
+                  y: 20,
+                  opacity: 0,
+                }}
+                animate={{
+                  y: 0,
+                  opacity: 1,
+                }}
+                transition={{
+                  delay: 0.45,
+                  duration: 0.4,
+                  ease: "easeInOut",
+                }}
+                exit={{
+                  y: 20,
+                  opacity: 0,
+                }}
+              >
+                <div className="absolute bottom-3 left-3 p-4 bg-white rounded-lg shadow-md">
+                  <span className="text-sm text-gray-500">
+                    Press <kbd>Tab</kbd> to accept suggestion
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       <div className="border border-gray-200 rounded-lg col-span-2 p-4">
