@@ -158,7 +158,7 @@ export default function Home() {
   };
 
   return (
-    <div className="grid grid-cols-6 gap-4 grid-flow-row p-12 max-w-screen-2xl w-full">
+    <div className="md:grid flex flex-col grid-cols-6 gap-4 grid-flow-row p-12 max-w-screen-2xl w-full">
       <Header />
       <div className="relative col-span-4">
         <div className="relative w-full h-full">
