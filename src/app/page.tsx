@@ -19,6 +19,7 @@ import { useUploadsStore } from "@/store/uploads";
 import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChatCompletionChunk } from "groq-sdk/resources/chat/completions.mjs";
 
 export default function Home() {
   const { uploads, setUploads, removeUpload } = useUploadsStore();
@@ -71,16 +72,24 @@ export default function Home() {
           let i = 0;
 
           while (!done) {
-            const { value, done: isDone } = await reader.read();
+            const { done: isDone, value } = await reader.read();
+
             done = isDone;
             if (value) {
               let chunk = decoder.decode(value, { stream: true });
 
-              if (i === 0 && chunk[0] === " ") {
-                chunk = chunk.substring(1);
-              }
+              for (const line of chunk.split("\n")) {
+                if (line.trim() === "") {
+                  continue;
+                }
 
-              setSuggestion((prev) => prev + chunk);
+                const data = JSON.parse(line.trim()) as ChatCompletionChunk;
+                const content = data.choices[0].delta.content;
+
+                if (content) {
+                  setSuggestion((prev) => prev + content);
+                }
+              }
 
               await new Promise((resolve) => setTimeout(resolve, 200));
 
