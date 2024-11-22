@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,19 +11,49 @@ import {
 } from "@/components/ui/dialog";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { useSourcesStore } from "@/store/sources";
-import { Source } from "@/types/source";
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatCompletionChunk } from "groq-sdk/resources/chat/completions.mjs";
-import { FilePlus, FileText, Link, Sparkles, Type } from "lucide-react";
+import {
+  Bold,
+  FilePlus,
+  FileText,
+  Italic,
+  LinkIcon,
+  List,
+  ListOrdered,
+  Redo,
+  UnderlineIcon,
+  Undo,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function TextEditor() {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Underline,
+    ],
+    content: "",
+  });
+
   const { sources, setSources, removeSource } = useSourcesStore();
-  const [text, setText] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasCompletedSuggestions, setHasCompletedSuggestions] = useState(false);
@@ -32,14 +61,30 @@ export default function Home() {
     useState<AbortController | null>(null);
 
   useEffect(() => {
+    const fetchSources = async () => {
+      const response = await fetch("/api/uploads");
+      if (response.ok) {
+        const sources = await response.json();
+        setSources(sources);
+      }
+    };
+
+    fetchSources();
+  }, [setSources]);
+
+  useEffect(() => {
+    if (!editor || !isTyping) {
+      return;
+    }
+
+    const text = editor.getText();
     setSuggestion("");
 
-    if (!text || text.trim().length === 0 || !isTyping) {
+    if (!text || text.trim().length === 0) {
       return;
     }
 
     if (abortController) {
-      // Abort previous fetch request if user starts typing
       abortController.abort();
     }
 
@@ -107,124 +152,220 @@ export default function Home() {
     }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [text, isTyping]);
+  }, [editor, isTyping, editor?.getText()]);
 
-  useEffect(() => {
-    const fetchSources = async () => {
-      const response = await fetch("/api/uploads");
-      if (response.ok) {
-        const sources = (await response.json()) as Source[];
-        setSources(sources);
-      }
-    };
+  if (!editor) {
+    return null;
+  }
 
-    fetchSources();
-  }, [setSources]);
-
-  const renderTextWithSuggestion = () => {
-    const textSpans = text
-      .split("")
-      .map((char, index) => <span key={`text-${index}`}>{char}</span>);
-
-    const suggestionSpans = suggestion.split("").map((char, index) => (
-      <motion.span
-        initial={{
-          opacity: 0,
-          y: 20,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.2,
-          ease: "easeInOut",
-        }}
-        key={`suggestion-${index}`}
-        style={{
-          color: "rgb(156 163 175)",
-        }}
-      >
-        {char}
-      </motion.span>
-    ));
-
-    return (
-      <>
-        {textSpans}
-        {suggestionSpans}
-      </>
-    );
-  };
+  const fontSizes = [
+    "8",
+    "10",
+    "12",
+    "14",
+    "16",
+    "18",
+    "20",
+    "24",
+    "30",
+    "36",
+    "48",
+    "60",
+    "72",
+  ];
 
   return (
-    <div className="md:grid flex flex-col grid-cols-6 gap-4 grid-flow-row p-12 max-w-screen-2xl w-full">
-      <Header />
-      <div className="relative col-span-4">
-        <div className="relative w-full h-full">
-          <div
-            className={cn(
-              "absolute inset-0 px-4 text-white py-2 text-lg rounded-lg border border-gray-200",
-              "bg-transparent font-medium pointer-events-none whitespace-pre-wrap"
-            )}
-            aria-hidden="true"
-          >
-            {renderTextWithSuggestion()}
+    <div className="flex flex-row w-full h-screen">
+      <div className="flex items-start gap-2 justify-center mb-4 border-r border-gray-200 p-4">
+        <Button variant="outline" className="gap-2">
+          <FileText className="h-4 w-4" />
+          New Document
+        </Button>
+      </div>
+
+      <div className="w-full max-w-6xl mx-auto p-4 space-y-4">
+        <div className="bg-gray-100 rounded-lg p-2 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+            >
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+            >
+              <Redo className="h-4 w-4" />
+            </Button>
           </div>
-          <textarea
-            className={cn(
-              "w-full h-full px-4 py-2 text-lg rounded-lg border border-gray-200",
-              "bg-transparent font-medium relative"
-            )}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setIsTyping(true);
-              setSuggestion("");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Tab") {
-                setHasCompletedSuggestions(true);
-                e.preventDefault();
-                setText(text + suggestion);
-                setSuggestion("");
-                setIsTyping(false);
+
+          <div className="h-6 w-px bg-gray-300" />
+
+          <Select defaultValue="normal">
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Normal Text" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal Text</SelectItem>
+              <SelectItem value="h1">Heading 1</SelectItem>
+              <SelectItem value="h2">Heading 2</SelectItem>
+              <SelectItem value="h3">Heading 3</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select defaultValue="12">
+            <SelectTrigger className="w-[80px]">
+              <SelectValue placeholder="12" />
+            </SelectTrigger>
+            <SelectContent>
+              {fontSizes.map((size) => (
+                <SelectItem key={size} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={editor.isActive("bold") ? "bg-gray-200" : ""}
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={editor.isActive("italic") ? "bg-gray-200" : ""}
+            >
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={editor.isActive("underline") ? "bg-gray-200" : ""}
+            >
+              <UnderlineIcon className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="h-6 w-px bg-gray-300" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const url = window.prompt("Enter URL");
+              if (url) {
+                editor.chain().focus().setLink({ href: url }).run();
               }
             }}
-            placeholder="Start typing..."
-          />
-          <AnimatePresence>
-            {suggestion && !hasCompletedSuggestions && (
-              <motion.div
-                initial={{
-                  y: 20,
-                  opacity: 0,
+            className={editor.isActive("link") ? "bg-gray-200" : ""}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+
+          <div className="h-6 w-px bg-gray-300" />
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={editor.isActive("bulletList") ? "bg-gray-200" : ""}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={editor.isActive("orderedList") ? "bg-gray-200" : ""}
+            >
+              <ListOrdered className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 h-full">
+          <div className="prose prose-sm max-w-none flex-1 h-full">
+            <div className="relative h-full">
+              <EditorContent
+                editor={editor}
+                style={{
+                  outline: "none",
                 }}
-                animate={{
-                  y: 0,
-                  opacity: 1,
+                className="h-full rounded-lg p-4 z-20 text-black"
+                placeholder="Start writing..."
+                onKeyDown={(e) => {
+                  if (e.key === "Tab" && suggestion) {
+                    e.preventDefault();
+                    editor.commands.insertContent(suggestion);
+                    setSuggestion("");
+                    setIsTyping(false);
+                    setHasCompletedSuggestions(true);
+                  }
                 }}
-                transition={{
-                  delay: 0.45,
-                  duration: 0.4,
-                  ease: "easeInOut",
+                onInput={() => {
+                  setIsTyping(true);
+                  setSuggestion("");
                 }}
-                exit={{
-                  y: 20,
-                  opacity: 0,
-                }}
-              >
-                <div className="absolute bottom-3 left-3 p-4 bg-white rounded-lg shadow-md">
-                  <span className="text-sm text-gray-500">
-                    Press <kbd>Tab</kbd> to accept suggestion
-                  </span>
+              />
+              {!editor.getText() && (
+                <div className="absolute top-0 left-0 text-gray-400 pointer-events-none p-4">
+                  Start writing...
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+              {suggestion && (
+                <div className="absolute top-0 left-0 text-gray-400 pointer-events-none p-4 z-10">
+                  <span className="text-transparent">{editor.getText()}</span>
+                  {suggestion}
+                </div>
+              )}
+            </div>
+            <AnimatePresence>
+              {suggestion && !hasCompletedSuggestions && (
+                <motion.div
+                  initial={{
+                    y: 20,
+                    opacity: 0,
+                  }}
+                  animate={{
+                    y: 0,
+                    opacity: 1,
+                  }}
+                  transition={{
+                    delay: 0.45,
+                    duration: 0.4,
+                    ease: "easeInOut",
+                  }}
+                  exit={{
+                    y: 20,
+                    opacity: 0,
+                  }}
+                >
+                  <div className="mt-2 p-2 bg-white rounded-lg shadow-md">
+                    <span className="text-sm text-gray-500">
+                      Press <kbd>Tab</kbd> to accept suggestion
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
-      <div className="border border-gray-200 rounded-lg col-span-2 p-4">
+
+      <div className="border border-gray-200 rounded-lg flex-1 p-4">
         <h2 className="text-lg font-semibold">Sources</h2>
         <div className="flex flex-col items-start gap-4">
           {sources.map((source, idx) => (
@@ -278,7 +419,7 @@ export default function Home() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                Add a source <Sparkles className="h-5 w-5 text-yellow-400" />
+                Add a source <FilePlus className="h-5 w-5 text-yellow-400" />
               </DialogTitle>
               <DialogDescription>
                 Add a source from the web, upload a document, or type your own
@@ -295,7 +436,7 @@ export default function Home() {
                 <div className="flex items-center space-x-2">
                   <Input type="url" placeholder="https://example.com" />
                   <Button type="submit" size="sm">
-                    <Link className="mr-2 h-4 w-4" />
+                    <LinkIcon className="mr-2 h-4 w-4" />
                     Add
                   </Button>
                 </div>
@@ -309,7 +450,7 @@ export default function Home() {
                   className="min-h-[100px]"
                 />
                 <Button className="mt-2 w-full">
-                  <Type className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   Add Text
                 </Button>
               </TabsContent>

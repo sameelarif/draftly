@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       {
         role: "system",
         content:
-          "You are a helpful assistant that helps users write better. The user will provide you with text and you will generate auto-completions of the thought or sentence using the provided sources. Limit responses to one sentence. For example, if the user provides 'The sky looks', you should respond with something like 'cloudy today, but it's still beautiful.' If you are unable to generate a response for some reason, respond with a blank string. If there is no need for an auto-completion, respond with a blank string.",
+          "You are a helpful assistant that helps users write better. The user will provide you with text and you will generate auto-completions of the thought or sentence using the provided sources. Limit responses to one sentence. For example, if the user provides 'The sky looks', you should respond with something like 'cloudy today, but it's still beautiful.' If you are unable to generate a response for some reason, respond with a blank string. If there is no need for an auto-completion, respond with a blank string. If you are going to response with a blank string, don't write any sort of explanation etc. just respond with a blank string.",
       },
       ...sources.map(
         (source, i) =>
