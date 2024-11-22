@@ -178,8 +178,9 @@ export default function TextEditor() {
     <div className="flex flex-row w-full h-screen">
       <div className="flex items-start gap-2 justify-center mb-4 border-r border-gray-200 p-4">
         <Button variant="outline" className="gap-2">
-          <FileText className="h-4 w-4" />
-          New Document
+          <FileText className="h-4 w-4 hidden md:block" />
+          <FilePlus className="h-4 w-4 md:hidden" />
+          <span className="hidden md:block">New Document</span>
         </Button>
       </div>
 
