@@ -57,6 +57,15 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+You also need to set up a Supabase project and add the necessary environment variables to the `.env` file.
+
+Only one table is used in the database:
+
+- `source`
+  | id | user_id | label | content | created_at |
+  | --- | --- | --- | --- | --- |
+  | int8 | text | text | text | timestamptz |
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
