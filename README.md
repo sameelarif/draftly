@@ -1,4 +1,4 @@
-# Draftly
+# Draftly (WIP)
 
 Draftly is designed to assist users in writing text content using provided sources as context to generate auto-completions. It leverages OpenAI's API for text generation and Supabase for file storage and management. The application is designed for students, researchers, copywriters, and anyone who needs to generate text content efficiently.
 
