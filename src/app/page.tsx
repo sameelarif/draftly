@@ -53,8 +53,9 @@ export default function TextEditor() {
     content: "",
   });
 
-  const { sources, setSources, removeSource } = useSourcesStore();
+  const { sources, addSource, setSources, removeSource } = useSourcesStore();
   const [suggestion, setSuggestion] = useState("");
+  const [textSource, setTextSource] = useState<string>("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasCompletedSuggestions, setHasCompletedSuggestions] = useState(false);
   const [abortController, setAbortController] =
@@ -449,8 +450,29 @@ export default function TextEditor() {
                 <Textarea
                   placeholder="Write in the tone of Commander Levi..."
                   className="min-h-[100px]"
+                  value={textSource}
+                  onChange={(e) => setTextSource(e.target.value)}
                 />
-                <Button className="mt-2 w-full">
+                <Button
+                  onClick={async () => {
+                    const res = await fetch(`/api/sources`, {
+                      method: "PUT",
+                      body: JSON.stringify({
+                        type: "text",
+                        content: textSource,
+                      }),
+                    });
+
+                    if (!res.ok) {
+                      console.error("Failed to delete upload:", res.statusText);
+                      return;
+                    }
+
+                    const source = await res.json();
+                    addSource(source);
+                  }}
+                  className="mt-2 w-full"
+                >
                   <FileText className="mr-2 h-4 w-4" />
                   Add Text
                 </Button>

@@ -5,3 +5,8 @@ export interface Source {
   content: string;
   created_at: Date;
 }
+
+export interface AddSourceRequest {
+  type: "url" | "text";
+  content: string;
+}
