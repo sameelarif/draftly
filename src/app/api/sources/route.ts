@@ -19,7 +19,9 @@ export async function PUT(req: NextRequest) {
   let textContent = content;
 
   if (type === "url") {
-    const res = await fetch(content);
+    const res = await fetch(content, {
+      redirect: "follow",
+    });
     const html = await res.text();
 
     const text = extractTextContent(html);
