@@ -56,6 +56,7 @@ export default function TextEditor() {
   const { sources, addSource, setSources, removeSource } = useSourcesStore();
   const [suggestion, setSuggestion] = useState("");
   const [textSource, setTextSource] = useState<string>("");
+  const [urlSource, setUrlSource] = useState<string>("");
   const [isTyping, setIsTyping] = useState(false);
   const [hasCompletedSuggestions, setHasCompletedSuggestions] = useState(false);
   const [abortController, setAbortController] =
@@ -436,8 +437,36 @@ export default function TextEditor() {
               </TabsList>
               <TabsContent value="url" className="mt-4">
                 <div className="flex items-center space-x-2">
-                  <Input type="url" placeholder="https://example.com" />
-                  <Button type="submit" size="sm">
+                  <Input
+                    value={urlSource}
+                    onChange={(e) => setUrlSource(e.target.value)}
+                    type="url"
+                    placeholder="https://example.com"
+                  />
+                  <Button
+                    onClick={async () => {
+                      const res = await fetch(`/api/sources`, {
+                        method: "PUT",
+                        body: JSON.stringify({
+                          type: "url",
+                          content: urlSource,
+                        }),
+                      });
+
+                      if (!res.ok) {
+                        console.error(
+                          "Failed to delete upload:",
+                          res.statusText
+                        );
+                        return;
+                      }
+
+                      const source = await res.json();
+                      addSource(source);
+                    }}
+                    type="submit"
+                    size="sm"
+                  >
                     <LinkIcon className="mr-2 h-4 w-4" />
                     Add
                   </Button>
